@@ -1,0 +1,33 @@
+def clean_fasta(input_file, output_file):
+    standard_aas = set("ACDEFGHIKLMNPQRSTVWY")
+    cleaned_count = 0
+    total_count = 0
+    
+    with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
+        header = None
+        seq_chunks = []
+        
+        for line in infile:
+            line = line.strip()
+            if line.startswith('>'):
+                if header:
+                    seq = "".join(seq_chunks)
+                    if all(aa in standard_aas for aa in seq.upper()) and len(seq) > 0:
+                        outfile.write(f"{header}\n{seq}\n")
+                        cleaned_count += 1
+                    total_count += 1
+                header = line
+                seq_chunks = []
+            else:
+                seq_chunks.append(line)
+        
+        if header:
+            seq = "".join(seq_chunks)
+            if all(aa in standard_aas for aa in seq.upper()) and len(seq) > 0:
+                outfile.write(f"{header}\n{seq}\n")
+                cleaned_count += 1
+            total_count += 1
+            
+    print(f"Total: {total_count}, Cleaned & Saved: {cleaned_count} to {output_file}")
+
+clean_fasta("core_proteins_wp.faa", "cleaned_core_proteins.faa")
