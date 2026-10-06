@@ -1,0 +1,34 @@
+import pandas as pd
+
+def extract_core_proteins(pav_file, faa_file, output_file):
+    try:
+        df = pd.read_excel(pav_file, engine='xlrd')
+    except Exception:
+        df = pd.read_csv(pav_file, sep=None, engine='python')
+    
+    target_ids = set()
+    for col in df.columns:
+        for val in df[col].dropna():
+            ids = str(val).replace(';', ' ').replace(',', ' ').split()
+            for i in ids:
+                if i != '-' and not i.isdigit():
+                    target_ids.add(i.strip())
+                    
+    extracted_count = 0
+    with open(faa_file, 'r') as infile, open(output_file, 'w') as outfile:
+        write_sequence = False
+        for line in infile:
+            if line.startswith('>'):
+                write_sequence = False
+                header = line.strip()
+                for tid in target_ids:
+                    if tid in header or (len(tid) > 2 and tid in header.split()[0]):
+                        write_sequence = True
+                        extracted_count += 1
+                        break
+            if write_sequence:
+                outfile.write(line)
+                
+    print(f"Extracted {extracted_count} sequences to {output_file}")
+
+extract_core_proteins("PAV_matrix (1).xls", "all_proteins.faa", "core_proteins_wp.faa")
